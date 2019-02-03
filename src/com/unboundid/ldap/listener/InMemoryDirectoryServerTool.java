@@ -21,21 +21,6 @@
 package com.unboundid.ldap.listener;
 
 
-
-import java.io.File;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.StreamHandler;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.TrustManager;
-
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ResultCode;
@@ -52,13 +37,28 @@ import com.unboundid.util.args.ArgumentException;
 import com.unboundid.util.args.ArgumentParser;
 import com.unboundid.util.args.BooleanArgument;
 import com.unboundid.util.args.DNArgument;
-import com.unboundid.util.args.IntegerArgument;
 import com.unboundid.util.args.FileArgument;
+import com.unboundid.util.args.IntegerArgument;
+import com.unboundid.util.args.OperationTypeArgument;
 import com.unboundid.util.args.StringArgument;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
 import com.unboundid.util.ssl.TrustStoreTrustManager;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.TrustManager;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.StreamHandler;
 
 import static com.unboundid.ldap.listener.ListenerMessages.*;
 
@@ -91,6 +91,10 @@ import static com.unboundid.ldap.listener.ListenerMessages.*;
  *       the password that should be used when attempting to bind as the user
  *       specified with the "-additionalBindDN" argument.  If this is provided,
  *       then the --additionalBindDN argument must also be given.</LI>
+ *   <LI>"-n {operationType}" or "--authnRequiredOperationType {operationType}"
+ *       -- specifies an operation type which will only be allowed for
+ *       authenticated clients. Note that authentication will never be required
+ *       for bind operations.</LI>
  *   <LI>"-c {count}" or "--maxChangeLogEntries {count}" -- Indicates whether an
  *       LDAP changelog should be enabled, and if so how many changelog records
  *       should be maintained.  If this argument is not provided, or if it is
@@ -287,6 +291,10 @@ public final class InMemoryDirectoryServerTool
   // The argument used to specify the server vendor version.
   private StringArgument vendorVersionArgument;
 
+  // the argument used to specify operation types requiring an authenticated
+  // client.
+  private OperationTypeArgument authnRequiredOperationTypesArgument;
+
 
 
   /**
@@ -422,6 +430,15 @@ public final class InMemoryDirectoryServerTool
   public void addToolArguments(final ArgumentParser parser)
          throws ArgumentException
   {
+
+    authnRequiredOperationTypesArgument = new OperationTypeArgument('n',
+         "authnRequiredOperationType",
+         false,
+         0,
+         INFO_MEM_DS_TOOL_ARG_PLACEHOLDER_OPERATION_TYPE.get(),
+         INFO_MEM_DS_TOOL_ARG_DESC_AUTHN_REQUIRED_OPER_TYPE.get());
+    parser.addArgument(authnRequiredOperationTypesArgument);
+
     portArgument = new IntegerArgument('p', "port", false, 1,
          INFO_MEM_DS_TOOL_ARG_PLACEHOLDER_PORT.get(),
          INFO_MEM_DS_TOOL_ARG_DESC_PORT.get(), 0, 65_535);
@@ -1057,6 +1074,12 @@ public final class InMemoryDirectoryServerTool
     {
       serverConfig.setEqualityIndexAttributes(
            equalityIndexArgument.getValues());
+    }
+
+    if (authnRequiredOperationTypesArgument.isPresent())
+    {
+      serverConfig.setAuthenticationRequiredOperationTypes(
+                authnRequiredOperationTypesArgument.getValues());
     }
 
     return serverConfig;

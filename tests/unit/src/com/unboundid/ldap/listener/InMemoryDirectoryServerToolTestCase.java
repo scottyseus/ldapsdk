@@ -21,12 +21,6 @@
 package com.unboundid.ldap.listener;
 
 
-
-import java.io.File;
-import java.io.PrintStream;
-
-import org.testng.annotations.Test;
-
 import com.unboundid.ldap.sdk.ExtendedResult;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPSDKTestCase;
@@ -35,6 +29,10 @@ import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 import com.unboundid.util.NullOutputStream;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.PrintStream;
 
 
 
@@ -177,6 +175,7 @@ public final class InMemoryDirectoryServerToolTestCase
          "--trustStoreType", "JKS",
          "--vendorName", "Example Corp.",
          "--vendorVersion", "1.2.3",
+         "--authnRequiredOperationType", "add",
          "--dontStart");
 
     final InMemoryDirectoryServer ds = tool.getDirectoryServer();
